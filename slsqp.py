@@ -1,5 +1,4 @@
 from cluster import *
-from data import *
 import numpy as np
 from scipy.optimize import minimize
 from random import *
