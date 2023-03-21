@@ -7,7 +7,7 @@ n = 9
 #df['cluster_labels'] = kmeans.labels_
 #df.dropna(inplace=True) #supprimer les lignes contenant des valeurs manquantes de df
 # a et b sont les paramètres non prix et prix pour chaque persone, pcc et prime profit les primes payées actuellement
-print(V)
+
 b=[]
 a=[]
 pcc=[]
@@ -52,11 +52,10 @@ bounds = tuple((None, None) for _ in range(n))
 # Définir la valeur initiale
 l=9
 x0 = np.array(l*[random()/10-0.1])
-print(x0)
 # Minimiser la fonction objectif en utilisant la méthode SLSQP
-#result = minimize(fun, x0, args=(pcc, prime_profit, a,b), method='SLSQP', bounds=bounds, constraints=constraints)
+result = minimize(fun, x0, args=(pcc, prime_profit, a,b), method='SLSQP', bounds=bounds, constraints=constraints)
 
 # Afficher le résultat
-#print(result)
+print(result)
 
 
