@@ -44,7 +44,7 @@ constraints = []
 for i in range(n):
     constraints.append({'type': 'ineq', 'fun': lambda x, i=i:  x[i] + 0.1})
     constraints.append({'type': 'ineq', 'fun': lambda x, i=i:   -x[i] + 0.1})
-constraints.append({'type': 'ineq', 'fun': lambda x:  retention(x)[1] - 0.95})
+constraints.append({'type': 'ineq', 'fun': lambda x:  retention(x)[1]/n - 0.95})
 
 # Définir la borne inférieure et supérieure de chaque variable
 bounds = tuple((None, None) for _ in range(n))

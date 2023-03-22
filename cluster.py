@@ -22,7 +22,7 @@ newY=newY.dropna()
 n_clusters = 9
 
 # Application de l'algorithme de clustering K-Means
-kmeans = KMeans(n_clusters=n_clusters)
+kmeans = KMeans(n_clusters=n_clusters, n_init=10)
 kmeans.fit(newX_scaled)
 
 # Affichage des résultats
@@ -30,13 +30,13 @@ kmeans.fit(newX_scaled)
 newX_scaled['cluster']=kmeans.labels_
 #print(newX_scaled)
 V={}
-for i in range (0,10):
+for i in range (0,9):
     Dpp={}
     Dpcc={}
     Dpp[i]=newY[newX_scaled['cluster']==i]['prime_profit'].sum()
     Dpcc[i]=newY[newX_scaled['cluster']==i]['pcc'].sum()
-    V[i]=[Dpp[i],Dpcc[i],kmeans.cluster_centers_[i-1]]
-#print(V)
+    V[i]=[Dpp[i],Dpcc[i],kmeans.cluster_centers_[i]]
+print(V)
 # Plot the data colored by cluster label
 #plt.scatter(newX_scaled.iloc[:,0], newX_scaled.iloc[:,1], c=kmeans.labels_)
 #plt.xlabel('Première variable')
