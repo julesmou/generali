@@ -66,14 +66,14 @@ for i in range(len(A)):
 #plt.plot(A, Gain)
 # plt.show()
 
-plt.subplot(131)
-plt.bar(A, Rétention)
+
+plt.plot(A, Rétention)
 plt.xlabel('taux de réévaluation uniforme')
 plt.ylabel('taux de rétention moyen')
 plt.show()
 
-plt.subplot(131)
-plt.bar(A, Gain)
+
+plt.plot(A, Gain)
 plt.xlabel('taux de réévaluation uniforme')
 plt.ylabel('Gain')
 plt.show()
