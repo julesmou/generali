@@ -23,6 +23,7 @@ args = [pcc,prime_profit, a, b]
 def retention(x):
     ret = []
     m=0
+    r=0
     for i in range(n):
         r = 1/(1+np.exp(args[2][i]+args[3][i]*x[i]))
         ret.append(r)  # on définit la proba de rétention pour chaque client
@@ -39,7 +40,7 @@ def fun(x, *args):
     for i in range(n):
         res = res+(prime_profit[i]*(1+x[i])-pcc[i])*ret[i]
     return res
-# Définir les contraintes (sous forme d'un dictionnaire)
+# Définir les contraintes (sous forme d'un dictionnaire)'''
 constraints = []
 for i in range(n):
     constraints.append({'type': 'ineq', 'fun': lambda x, i=i:  x[i] + 0.1})
@@ -47,13 +48,21 @@ for i in range(n):
 constraints.append({'type': 'ineq', 'fun': lambda x:  retention(x)[1] - 0.95})
 
 # Définir la borne inférieure et supérieure de chaque variable
-bounds = tuple((None, None) for _ in range(n))
+bounds = tuple((-0.1, 0.1) for _ in range(n))
 
 # Définir la valeur initiale
 l=9
-x0 = np.array(l*[random()/10-0.1])
+x0 = np.array(l*[random()/10-0.05])
 # Minimiser la fonction objectif en utilisant la méthode SLSQP
-result = minimize(fun, x0, args=(pcc, prime_profit, a,b), method='SLSQP', bounds=bounds, constraints=constraints)
+result = minimize(fun, x0, args=(pcc, prime_profit, a,b), method='SLSQP', bounds=bounds, constraints=constraints, tol=1e-3)
 
 # Afficher le résultat
 print(result)
+
+
+# Définir la plage de valeurs pour chaque variable
+#r = 1/(1+np.exp(args[2][i]+args[3][i]*x1>><<<<<<<<<<>[i]))
+#plt.xlabel('Marge esperée')
+#plt.ylabel('Probabilité de rétention')
+#plt.title('Frontière efficiente')
+#plt.show()

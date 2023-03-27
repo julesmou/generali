@@ -6,7 +6,7 @@ import pandas as pd
 import math
 
 
-chemin_fichier = "/Users/antbe/Downloads/ptf_mrh_2020_elast_plr.xlsx"
+chemin_fichier = "/Users/julesmouradian/Desktop/Centrale/donnees.generali.xltx"
 
 # Charger les données à partir du fichier Excel
 data = pd.read_excel(chemin_fichier)
