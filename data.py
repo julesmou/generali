@@ -19,12 +19,12 @@ newY = pd.DataFrame(Y)
 newY = newY.dropna()
 
 # Multiplier la colonne 'coeff_prix' par 5
-newY['coeff_prix'] = newY['coeff_prix'].multiply(5)
+newY['coeff_prix'] = newY['coeff_prix'].multiply(20)
 
-# Supprimer les lignes où 'coeff_prix' est négatif
+# Supprimer les lignes où 'coeff_prix' est négatifs
 newY = newY.loc[newY['coeff_prix'] >= 0]
 # Définir les quantiles d'ordre α et 1 - α
-alpha = 0.05
+alpha = 0.02
 
 # Calculer les quantiles d'ordre α et 1 - α pour chaque colonne
 lower_quantiles = newY.quantile(alpha)
