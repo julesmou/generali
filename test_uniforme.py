@@ -7,46 +7,36 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
 
-chemin_fichier = "/Users/antbe/Downloads/ptf_mrh_2020_elast_plr.xlsx"
-
 # Charger les données à partir du fichier Excel
-data = pd.read_excel(chemin_fichier)
-data['coeff_prix'] = data['coeff_prix'].multiply(5)
+data = pd.read_csv(
+    "/Users/antbe/Downloads/ST7_projet/generali/filtre_0.01_sans_augmentation.csv")
+
 
 X = data[['prime_profit', 'pcc', 'coeff_non_prix',
           'coeff_prix']]
 
-# Supprimer les lignes contenant des valeurs manquantes
-X_scaled = X.dropna()
 
 # on récupère la longueur de la liste
-n = len(X_scaled[['coeff_non_prix']])
-
-# on fait une liste de notre répartition uniforme
-A = np.linspace(-0.1, 0.1, 10)
-# on défini la fonction de rétention
+taille_individu = len(X[['coeff_non_prix']])
 
 
 def retention(x):
-    ret = []
-    m = 0
-    for i in range(n):
-        r = 1/(1+np.exp(X_scaled["coeff_non_prix"].iloc[i] +
-               X_scaled["coeff_prix"].iloc[i]*x[i]))
-        ret.append(r)  # on définit la proba de rétention pour chaque client
-        m = ret[i]+m
-    return ret, m/n
-
-# on définit la fonction de gain
+    ret = 1/(1+np.exp(X["coeff_non_prix"] + X["coeff_prix"]*x))
+    somme_ret = ret.sum()
+    mean_rate = somme_ret/taille_individu
+    return ret, mean_rate
 
 
-def gain(x):
+def fun(x):
     ret = retention(x)[0]
-    res = 0
-    for i in range(n):
-        res = res+(X_scaled["prime_profit"].iloc[i] *
-                   (1+x[i])-X_scaled['pcc'].iloc[i])*ret[i]
+    marge = (X["prime_profit"] * (1+x)-X['pcc'])*ret
+    res = marge.sum()
     return res
+
+
+# on fait une liste de notre répartition uniforme
+A = np.linspace(-0.2, 0.2, 100)
+# on défini la fonction de rétention
 
 
 # on crée la liste des gains et de la rétention moyenne pour des réévaluations uniformes
@@ -54,11 +44,12 @@ def gain(x):
 Rétention = []
 Gain = []
 for i in range(len(A)):
-    x = np.ones(n)*A[i]
+    x = np.ones(taille_individu)*A[i]
     ret = retention(x)[1]
-    g = gain(x)
+    g = fun(x)
     Rétention.append(ret)
     Gain.append(g)
+
 
 #plt.plot(A, Rétention)
 # plt.show()

@@ -6,56 +6,57 @@ import pandas as pd
 import math
 
 
-chemin_fichier = "/Users/julesmouradian/Desktop/Centrale/donnees.generali.xltx"
-
 # Charger les données à partir du fichier Excel
-data = pd.read_excel(chemin_fichier)
-data['coeff_prix'] = data['coeff_prix'].multiply(5)
+data = pd.read_csv(
+    "/Users/antbe/Downloads/ST7_projet/generali/filtre_0.01_avec_augmentation_50.csv")
+
 
 X = data[['prime_profit', 'pcc', 'coeff_non_prix',
           'coeff_prix']]
 
-# Supprimer les lignes contenant des valeurs manquantes
-X_scaled = X.dropna()
 
 # on récupère la longueur de la liste
-taille_individu = len(X_scaled[['coeff_non_prix']])
+taille_individu = len(X[['coeff_non_prix']])
+
+# on ajoute un bruit blanc d'écart-type = 10% de la moyenne au coeff non prix
+#mean_a = X[['coeff_non_prix']].sum()/taille_individu
+#Gaussien_a = np.random.normal(0, 0.1*np.abs(mean_a), taille_individu)
+#X['coeff_non_prix'] = X['coeff_non_prix'] + Gaussien_a
+
+# on ajoute un bruit blanc d'écart-type = 10% de la moyenne au coeff prix
+#mean_b = X[['coeff_prix']].sum()/taille_individu
+#Gaussien_b = np.random.normal(0, 0.1*np.abs(mean_b), taille_individu)
+#X['coeff_prix'] = X['coeff_prix'] + Gaussien_b
 
 
 def retention(x):
-    ret = []
-    m = 0
-    for i in range(taille_individu):
-        r = 1/(1+np.exp(X_scaled["coeff_non_prix"].iloc[i] +
-               X_scaled["coeff_prix"].iloc[i]*x[i]))
-        ret.append(r)  # on définit la proba de rétention pour chaque client
-        m = ret[i]+m
-    return ret, m/taille_individu
+    ret = 1/(1+np.exp(X["coeff_non_prix"] + X["coeff_prix"]*x))
+    somme_ret = ret.sum()
+    mean_rate = somme_ret/taille_individu
+    return ret, mean_rate
 
 
 def fun(x):
     ret = retention(x)[0]
-    res = 0
-    for i in range(taille_individu):
-        res = res+(X_scaled["prime_profit"].iloc[i] *
-                   (1+x[i])-X_scaled['pcc'].iloc[i])*ret[i]
+    marge = (X["prime_profit"] * (1+x)-X['pcc'])*ret
+    res = marge.sum()
     return res
 
 
 # Problem settings
 D = taille_individu  # Dimension of the search space
-size_of_the_box = 0.1
-m = -size_of_the_box * np.ones(D)  # Lower bound
-M = size_of_the_box * np.ones(D)  # Upper bound
+m = -0.05 * np.ones(D)  # Lower bound
+M = 0.1 * np.ones(D)  # Upper bound
 
 
 prob = fun
 
 # Parameters for DE
-N = 100  # Population Size
-G = 10  # No. of iterations
+N = 50  # Population Size
+G = 50  # No. of iterations
 F = 0.8  # Scaling factor
 C = 0.7  # Crossover probability
+
 
 # Starting of DE
 f = np.empty((N))  # Collection of vectors to store f(population_g)
@@ -67,8 +68,14 @@ U = np.empty((N, D))
 
 Pinit = np.random.rand(N, D)*(M-m) + m  # Initial P
 
+Fplot = []
+Ret = []
+
 for n in range(N):
     f[n] = prob(Pinit[n])  # Evaluating f(population_1)
+
+P = Pinit
+
 
 # Boucle principale
 tic = time.time()
@@ -92,12 +99,10 @@ for g in range(G-1):
         V[n] = P[r1] + F*(P[r2]-P[r3])
 
         # Croisement
-        j_rand = np.random.randint(D)
-        for j in range(D):
-            if np.random.rand() <= C or j == j_rand:
-                U[n] = V[n]
-            else:
-                U[n] = P[n]
+        if np.random.rand() <= C:
+            U[n] = V[n]
+        else:
+            U[n] = P[n]
 
         # Sélection
         f_U = prob(U[n])
@@ -105,60 +110,62 @@ for g in range(G-1):
             P[n] = U[n]
             f[n] = f_U
 
+        # préparation du graphique
+    Fplot.append([np.min(f, axis=0), np.max(f, axis=0),
+                  np.median(f, axis=0), np.mean(f, axis=0)])
+    opt_idx = np.argmin(f[-1])
+    opt_sol = P[opt_idx]
+    Ret.append(retention(opt_sol)[1])
+
+
 # Temps de calcul
 calculation_time = time.time() - tic
 
 # Résultats clés
 print('=========== OPTIMAL SOLUTION')
 print(f'calculation time = {calculation_time}s')
-opt_val, opt_idx = np.min(f[:, -1]), np.argmin(f[:, -1])
-opt_sol = P[opt_idx, :, G-1]
+opt_val, opt_idx = np.min(f[-1]), np.argmin(f[-1])
+opt_sol = P[opt_idx]
 print('=========== OPTIMAL SOLUTION ===========')
 print('The optimal solution x* is:')
 print(opt_sol)
 print(f'The corresponding objective value is: {opt_val}')
+opt_ret = retention(opt_sol)[1]
+print(f'le taux de rétention moyen de la valeur optimale est :{opt_ret}%')
 
 # Analyse comportementale
 
 # Critère
-'''plt.plot(range(G), np.min(f, axis=0), 'r.', range(G), np.max(f, axis=0), 'r.',
-         range(G), np.median(f, axis=0), 'm', range(G), np.mean(f, axis=0), 'b')
+
+# on crée fmin,fmax,fmedian et fmean
+fmin = []
+for i in range(len(Fplot)):
+    fmin.append(Fplot[i][0])
+
+fmax = []
+for i in range(len(Fplot)):
+    fmax.append(Fplot[i][1])
+
+fmedian = []
+for i in range(len(Fplot)):
+    fmedian.append(Fplot[i][2])
+
+fmean = []
+for i in range(len(Fplot)):
+    fmean.append(Fplot[i][3])
+
+# on les traces
+index = list(range(1, len(Fplot)+1))
+
+plt.plot(index, fmin, 'r.', index, fmax, 'r.',
+         index, fmedian, 'm', index, fmean, 'b')
 plt.legend(['min', 'max', 'median', 'mean'])
 plt.title('CRITERION')
 plt.grid(True)
+plt.show()
 
-# distance
-
-d2mean = np.empty((N, G))
-pop_stats = np.empty((6, G))
-for g in range(G):
-    # Calculate the average position for the current generation
-    avg_pos = np.mean(P[:, :, g], axis=1)
-    # Compute the distances between each individual and the average position
-    dist_to_avg = np.sqrt(
-        np.sum((P[:, :, g] - avg_pos[:, np.newaxis])**2, axis=0))
-    # Store the distances in the d2mean table
-    d2mean[:, g] = dist_to_avg
-    # Calculate population statistics
-    pop_stats[:, g] = np.array([np.min(dist_to_avg),
-                                np.max(dist_to_avg),
-                                np.median(dist_to_avg),
-                                np.mean(dist_to_avg),
-                                np.median(dist_to_avg) + np.std(dist_to_avg),
-                                max(np.median(dist_to_avg) - np.std(dist_to_avg), np.median(dist_to_avg)/100)])
-
-# Plot population statistics
-fig, ax = plt.subplots()
-ax.plot(np.arange(1, G+1), pop_stats[0], 'r.', label='min')
-ax.plot(np.arange(1, G+1), pop_stats[1], 'r.', label='max')
-ax.plot(np.arange(1, G+1), pop_stats[2], 'm', label='median')
-ax.plot(np.arange(1, G+1), pop_stats[3], 'b', label='mean')
-ax.plot(np.arange(1, G+1), pop_stats[4], 'g', label='median+std')
-ax.plot(np.arange(1, G+1), pop_stats[5], 'g', label='median-std')
-ax.legend()
-ax.set_title('POPULATION /mean')
-ax.set_xlabel('Generation')
-ax.set_ylabel('Distance to average position')
-ax.grid(True)
-ax.autoscale(True)
-plt.show()'''
+plt.plot(index, Ret)
+plt.legend(['taux de rétention'])
+plt.title('CRITERION')
+plt.grid(True)
+plt.show()
